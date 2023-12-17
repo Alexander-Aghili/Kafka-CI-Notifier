@@ -14,31 +14,8 @@ public class GetTestsJson {
     private static final String TEST_LINK = "https://ge.apache.org/scan-data/gradle/grvvdpfp6ognw/tests";
 
     public static String getTestJson() throws IOException {
-        String rawJson = getRawJsonFromHTTPRequest(TEST_LINK);
+        String rawJson = HTTPRequest.getRawJsonFromURL(TEST_LINK);
         return extractTestsArray(rawJson);
-    }
-
-    private static String getRawJsonFromHTTPRequest(String url) throws IOException {
-        URL apiUrl = new URL(url);
-        HttpURLConnection connection = (HttpURLConnection) apiUrl.openConnection();
-        connection.setRequestMethod("GET");
-
-        int responseCode = connection.getResponseCode();
-
-        if (responseCode == HttpURLConnection.HTTP_OK) {
-            try (BufferedReader reader = new BufferedReader(new InputStreamReader(connection.getInputStream()))) {
-                StringBuilder response = new StringBuilder();
-                String line;
-
-                while ((line = reader.readLine()) != null) {
-                    response.append(line);
-                }
-
-                return response.toString();
-            }
-        } else {
-            throw new IOException("HTTP request failed with response code: " + responseCode);
-        }
     }
 
     private static String extractTestsArray(String rawJsonString) {
