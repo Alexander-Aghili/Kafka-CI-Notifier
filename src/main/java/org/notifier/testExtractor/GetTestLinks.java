@@ -22,11 +22,6 @@ public class GetTestLinks {
     private static final String TIME_ZONE = "America/Los_Angeles";
     private static final int DAYS_BEFORE = 90;
 
-    private static JSONArray extractTestsArray(String rawJsonString) {
-        JSONObject jsonObject = new JSONObject(rawJsonString);
-        return jsonObject.getJSONObject("data").getJSONArray("tests");
-    }
-
 
     public static ArrayList<String> getLinksFromJsonData(String jsonData) throws JsonProcessingException {
         ArrayList<String> links = new ArrayList<>();
@@ -50,7 +45,7 @@ public class GetTestLinks {
         HashMap<String, Object> queryParameters = new HashMap<>();
         queryParameters.put("container", container);
         queryParameters.put("startTimeMin", getUnixEpochOfMidnightFromDaysBefore(DAYS_BEFORE, TIME_ZONE));
-        queryParameters.put("startTimeMax", Instant.now().getEpochSecond());
+        queryParameters.put("startTimeMax", Instant.now().toEpochMilli());
         queryParameters.put("sortField", "FAILED");
         queryParameters.put("test", test);
         queryParameters.put("timeZoneId", TIME_ZONE);
@@ -75,11 +70,11 @@ public class GetTestLinks {
     private static String encodeString(String input) {
         return URLEncoder.encode(input, StandardCharsets.UTF_8);
     }
-    public static Long getUnixEpochOfMidnightFromDaysBefore(int daysBefore, String timezone) {
+    private static Long getUnixEpochOfMidnightFromDaysBefore(int daysBefore, String timezone) {
         ZonedDateTime today = ZonedDateTime.now(ZoneId.of(timezone));
         ZonedDateTime targetDate = today.minusDays(daysBefore);
         ZonedDateTime targetDateTime = targetDate.with(LocalTime.MIDNIGHT);
-        return targetDateTime.toInstant().getEpochSecond();
+        return targetDateTime.toInstant().toEpochMilli();
     }
 
 
