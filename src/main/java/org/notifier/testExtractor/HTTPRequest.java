@@ -7,7 +7,7 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 
 public class HTTPRequest {
-    public static String getRawJsonFromURL(String url) throws IOException {
+    public String getRawJsonFromURL(String url) throws IOException {
         URL apiUrl = new URL(url);
         HttpURLConnection connection = (HttpURLConnection) apiUrl.openConnection();
         connection.setRequestMethod("GET");

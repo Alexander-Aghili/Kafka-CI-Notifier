@@ -3,7 +3,9 @@ package org.notifier.testAnalysis;
 import org.json.JSONObject;
 import org.notifier.testAnalysis.OutcomeDistribution;
 
-public class Datapoint implements Comparable {
+import javax.xml.crypto.Data;
+
+public class Datapoint implements Comparable<Datapoint> {
     private long startTimestamp;
     private long endTimestamp;
     private OutcomeDistribution outcomeDistribution;
@@ -48,8 +50,7 @@ public class Datapoint implements Comparable {
     }
 
     @Override
-    public int compareTo(Object o) {
-        Datapoint d = (Datapoint) o;
-        return Long.compare(d.startTimestamp, this.startTimestamp);
+    public int compareTo(Datapoint o) {
+        return Long.compare(this.startTimestamp, o.startTimestamp);
     }
 }
