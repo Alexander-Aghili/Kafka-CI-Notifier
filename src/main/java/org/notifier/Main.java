@@ -11,6 +11,7 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.concurrent.ForkJoinPool;
 
 /*
  *  TODO: For project
@@ -24,22 +25,41 @@ public class Main {
     public static void main(String[] args) throws IOException {
         String jsonData = GetTestsJson.getTestJson();
         ArrayList<Test> tests = GetTestLinks.getTestsFromJsonData(jsonData);
+        File file = new File("/tmp/kafka/output.txt");
+        file.getParentFile().mkdirs();
+        file.createNewFile();
+        FileWriter tempWriter = new FileWriter(file);
 
-        tests.parallelStream().forEach((test) -> {
-            String link = test.getDataLink();
-            try {
-                test.setDatapoints(new GetTestData().getTestDataFromLink(link));
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
-            test.calculateWeightedValue();
-            System.out.println(test.getWeightedValue() + ": " + test.getUILink());
-        });
+        ForkJoinPool myPool = new ForkJoinPool(25);
+        myPool.submit(() -> {
+            tests.parallelStream().forEach((test) -> {
+                String link = test.getDataLink();
+                try {
+                    test.setDatapoints(new GetTestData().getTestDataFromLink(link));
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
+                test.calculateWeightedValue();
+                System.out.println(test.getWeightedValue() + ": " + test.getUILink());
+                try {
+                    tempWriter.write(test.getWeightedValue() + ": " + test.getUILink() + "\n");
+                    tempWriter.flush();
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
+
+            });
+        }).join();
+
+        tempWriter.close();
         Collections.sort(tests);
         System.out.println(tests.get(0).getUILink());
-        File file = new File("output.txt");
-        file.createNewFile();
-        FileWriter writer = new FileWriter(file);
+
+        File finalFile = new File("/tmp/kafka/final_output.txt");
+        finalFile.getParentFile().mkdirs();
+        finalFile.createNewFile();
+        FileWriter writer = new FileWriter(finalFile);
+
         for (Test test: tests) {
             writer.write(test.getUILink() + " " + String.valueOf(test.getWeightedValue()) + "\n");
         }
