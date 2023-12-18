@@ -1,5 +1,9 @@
 package org.notifier.testAnalysis;
 
+import org.json.JSONArray;
+import org.json.JSONObject;
+
+import java.io.IOException;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
@@ -7,6 +11,7 @@ import java.time.LocalTime;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 
 public class Test implements Comparable<Test>{
@@ -26,6 +31,23 @@ public class Test implements Comparable<Test>{
     public Test(String container, String test) {
         this.dataLink = convertTestInfoToDataLink(container, test);
         this.UILink = convertTestInfoToUILink(container, test);
+    }
+
+    public Test(String container, String test, JSONArray dataPointsJson) throws IOException {
+        this.dataLink = convertTestInfoToDataLink(container, test);
+        this.UILink = convertTestInfoToUILink(container, test);
+        this.datapoints = getDatapointsFromJson(dataPointsJson);
+    }
+
+    public Test(String json) throws IOException {
+        JSONObject jsonObj = new JSONObject(json);
+        String container = jsonObj.getJSONObject("data").getString("container");
+        String test = jsonObj.getJSONObject("data").getString("name");
+        JSONArray dataPoints = jsonObj.getJSONObject("data").getJSONObject("outcomeTrend").getJSONArray("dataPoints");
+
+        this.dataLink = convertTestInfoToDataLink(container, test);
+        this.UILink = convertTestInfoToUILink(container, test);
+        this.datapoints = getDatapointsFromJson(dataPoints);
     }
 
     public String getDataLink() {
@@ -58,6 +80,22 @@ public class Test implements Comparable<Test>{
 
     public void setWeightedValue(double weightedValue) {
         this.weightedValue = weightedValue;
+    }
+
+
+    private ArrayList<Datapoint> getDatapointsFromJson(JSONArray datapointsJson) throws IOException {
+        ArrayList<Datapoint> datapoints = new ArrayList<>();
+
+        if (datapointsJson == null) {
+            return datapoints;
+        }
+
+        for (Object datapointObj : datapointsJson) {
+            JSONObject datapoint = (JSONObject) datapointObj;
+            datapoints.add(new Datapoint(datapoint));
+        }
+        Collections.sort(datapoints);
+        return datapoints;
     }
 
     private String convertTestInfoToUILink(String container, String test) {

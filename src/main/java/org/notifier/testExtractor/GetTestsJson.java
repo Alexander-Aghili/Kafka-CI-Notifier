@@ -14,7 +14,7 @@ public class GetTestsJson {
     private static final String TEST_LINK = "https://ge.apache.org/scan-data/gradle/grvvdpfp6ognw/tests";
 
     public static String getTestJson() throws IOException {
-        String rawJson = new HTTPRequest().getRawJsonFromURL(TEST_LINK);
+        String rawJson = HTTPRequest.getRawJsonFromURL(TEST_LINK);
         return extractTestsArray(rawJson);
     }
 

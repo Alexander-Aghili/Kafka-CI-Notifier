@@ -19,8 +19,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 public class GetTestLinks {
 
-    public static ArrayList<Test> getTestsFromJsonData(String jsonData) throws JsonProcessingException {
-        ArrayList<Test> tests = new ArrayList<>();
+    public static ArrayList<String> getTestDataLinksFromJsonData(String jsonData) throws JsonProcessingException {
+        ArrayList<String> links = new ArrayList<>();
 
         // Parse JSON using Jackson
         ObjectMapper objectMapper = new ObjectMapper();
@@ -30,9 +30,9 @@ public class GetTestLinks {
             String container = jsonNode.get("suiteName").asText();
             String testName = jsonNode.get("displayName").asText();
             Test test = new Test(container, testName);
-            tests.add(test);
+            links.add(test.getDataLink());
         }
 
-        return tests;
+        return links;
     }
 }
