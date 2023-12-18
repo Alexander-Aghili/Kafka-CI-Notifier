@@ -1,17 +1,21 @@
 package org.notifier;
 
+import org.asynchttpclient.ListenableFuture;
+import org.asynchttpclient.Response;
+import org.jetbrains.annotations.NotNull;
 import org.notifier.testAnalysis.Datapoint;
 import org.notifier.testAnalysis.Test;
 import org.notifier.testExtractor.GetTestData;
 import org.notifier.testExtractor.GetTestsJson;
 import org.notifier.testExtractor.GetTestLinks;
+import org.notifier.testExtractor.HTTPRequest;
 
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.concurrent.ForkJoinPool;
+import java.util.concurrent.*;
 
 /*
  *  TODO: For project
@@ -25,44 +29,43 @@ public class Main {
     public static void main(String[] args) throws IOException {
         String jsonData = GetTestsJson.getTestJson();
         ArrayList<Test> tests = GetTestLinks.getTestsFromJsonData(jsonData);
-        File file = new File("/tmp/kafka/output.txt");
-        file.getParentFile().mkdirs();
-        file.createNewFile();
-        FileWriter tempWriter = new FileWriter(file);
+        ArrayList<Test> temp = new ArrayList<>();
+        for (int i = 0; i < 50; i++) {
+            temp.add(tests.get(i));
+        }
+        tests = temp;
+        // Create a ThreadPoolExecutor with a maximum of 500 threads and infinite keep-alive time
+        ExecutorService executor = new ThreadPoolExecutor(
+                50,  // corePoolSize
+                50, // maximumPoolSize
+                Long.MAX_VALUE, // keepAliveTime set to Long.MAX_VALUE for infinite time
+                TimeUnit.SECONDS,
+                new LinkedBlockingQueue<>()
+        );
 
-        ForkJoinPool myPool = new ForkJoinPool(25);
-        myPool.submit(() -> {
-            tests.parallelStream().forEach((test) -> {
-                String link = test.getDataLink();
+        System.out.println(tests.size());
+        for (Test test : tests) {
+            String link = test.getDataLink();
+            System.out.println(test.getUILink());
+            ListenableFuture<Response> future = HTTPRequest.asyncHttpRequest(link);
+            Runnable callback = () -> {
                 try {
-                    test.setDatapoints(new GetTestData().getTestDataFromLink(link));
-                } catch (IOException e) {
-                    throw new RuntimeException(e);
+                    Response response = future.get();
+                    System.out.println(response.getResponseBody());
+                } catch (Exception e) {
+                    e.printStackTrace();
                 }
-                test.calculateWeightedValue();
-                System.out.println(test.getWeightedValue() + ": " + test.getUILink());
-                try {
-                    tempWriter.write(test.getWeightedValue() + ": " + test.getUILink() + "\n");
-                    tempWriter.flush();
-                } catch (IOException e) {
-                    throw new RuntimeException(e);
-                }
+            };
+            future.addListener(callback, executor);
 
-            });
-        }).join();
+//            test.setDatapoints(GetTestData.getTestDataFromLink(link));
+//            test.calculateWeightedValue();
+//            System.out.println(test.getWeightedValue() + ": " + test.getUILink());
 
-        tempWriter.close();
+        }
+
+
         Collections.sort(tests);
         System.out.println(tests.get(0).getUILink());
-
-        File finalFile = new File("/tmp/kafka/final_output.txt");
-        finalFile.getParentFile().mkdirs();
-        finalFile.createNewFile();
-        FileWriter writer = new FileWriter(finalFile);
-
-        for (Test test: tests) {
-            writer.write(test.getUILink() + " " + String.valueOf(test.getWeightedValue()) + "\n");
-        }
-        writer.close();
     }
 }

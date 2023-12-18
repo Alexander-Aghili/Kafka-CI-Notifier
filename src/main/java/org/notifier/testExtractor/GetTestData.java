@@ -12,7 +12,7 @@ import java.util.Collections;
 public class GetTestData {
     public GetTestData() {}
 
-    public ArrayList<Datapoint> getTestDataFromLink(String link) throws IOException {
+    public static ArrayList<Datapoint> getTestDataFromLink(String link) throws IOException {
         ArrayList<Datapoint> datapoints = new ArrayList<>();
 
         JSONArray datapointsJson = getDatapointsJson(link);
@@ -24,12 +24,12 @@ public class GetTestData {
         return datapoints;
     }
 
-    private JSONArray getDatapointsJson(String link) throws IOException {
+    private static JSONArray getDatapointsJson(String link) throws IOException {
         String rawJson = new HTTPRequest().getRawJsonFromURL(link);
         return extractDatapointsFromRawJson(rawJson);
     }
 
-    private JSONArray extractDatapointsFromRawJson(String rawJson) {
+    private static JSONArray extractDatapointsFromRawJson(String rawJson) {
         JSONObject object = new JSONObject(rawJson);
         return object.getJSONObject("data").getJSONObject("outcomeTrend").getJSONArray("dataPoints");
     }
